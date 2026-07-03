@@ -12,10 +12,20 @@ st.subheader("تحليل تلقائي متكامل ")
 # --- الشريط الجانبي لإدخل البيانات والتحكم ---
 st.sidebar.header("إعدادات الفحص والتصفية")
 
-# صندوق إدخال الرموز (تنظيف الفراغات تلقائياً في الكود)
-tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META")
-tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+# 1. التحقق أولاً إذا كان هناك رموز محفوظة في رابط المتصفح (URL)
+if "tickers" in st.query_params:
+    default_tickers = st.query_params["tickers"]
+else:
+    default_tickers = "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META"
 
+# 2. صندوق إدخال الرموز (يأخذ القيمة الافتراضية أو المحفوظة)
+tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", default_tickers)
+
+# 3. تحديث الرابط في المتصفح تلقائياً بالرموز الحالية لتثبيتها عند التحديث
+st.query_params["tickers"] = tickers_input
+
+# 4. تنظيف الفراغات ومعالجة الرموز كقائمة
+tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
 # إطار الدخول والتنفيذ اللحظي (LTF)
 ltf_period = st.sidebar.selectbox("إطار الدخول والتنفيذ الحالي (LTF):", ['1h', '15m'], index=1)
 
