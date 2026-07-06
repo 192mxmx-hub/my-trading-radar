@@ -9,8 +9,6 @@ st.set_page_config(page_title="نظام التداول الأوتوماتيكي 
 st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية سيولة آسيا ولندن )")
 st.subheader("تحليل تلقائي متكامل ")
 
-# استيراد أداة التحديث التلقائي (تأكد من تثبيت streamlit-autorefresh إذا لم تكن موجودة)
-from streamlit_autorefresh import st_autorefresh
 
 # تحديث تلقائي كل دقيقتين (120,000 ملي ثانية)
 # تم تسمية الـ key لتفادي أي تعارض مع المدخلات
