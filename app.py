@@ -9,23 +9,20 @@ st.set_page_config(page_title="نظام التداول الأوتوماتيكي 
 st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية سيولة آسيا ولندن )")
 st.subheader("تحليل تلقائي متكامل ")
 
+# استيراد أداة التحديث التلقائي (تأكد من تثبيت streamlit-autorefresh إذا لم تكن موجودة)
+from streamlit_autorefresh import st_autorefresh
+
+# تحديث تلقائي كل دقيقتين (120,000 ملي ثانية)
+# تم تسمية الـ key لتفادي أي تعارض مع المدخلات
+count = st_autorefresh(interval=120000, limit=100, key="frameradar_refresh")
+
 # --- الشريط الجانبي لإدخل البيانات والتحكم ---
 st.sidebar.header("إعدادات الفحص والتصفية")
 
-# 1. التحقق أولاً إذا كان هناك رموز محفوظة في رابط المتصفح (URL)
-if "tickers" in st.query_params:
-    default_tickers = st.query_params["tickers"]
-else:
-    default_tickers = "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META"
-
-# 2. صندوق إدخال الرموز (يأخذ القيمة الافتراضية أو المحفوظة)
-tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", default_tickers)
-
-# 3. تحديث الرابط في المتصفح تلقائياً بالرموز الحالية لتثبيتها عند التحديث
-st.query_params["tickers"] = tickers_input
-
-# 4. تنظيف الفراغات ومعالجة الرموز كقائمة
+# صندوق إدخال الرموز (تنظيف الفراغات تلقائياً في الكود)
+tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META")
 tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
+
 # إطار الدخول والتنفيذ اللحظي (LTF)
 ltf_period = st.sidebar.selectbox("إطار الدخول والتنفيذ الحالي (LTF):", ['1h', '15m'], index=1)
 
