@@ -3,24 +3,33 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, time
-
-# إعدادات الصفحة الأساسية لتظهر بشكل لوحة تحكم عريضة واحترافية
-st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3", layout="wide")
-st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية سيولة آسيا ولندن )")
-st.subheader("تحليل تلقائي متكامل ")
-
-# استيراد أداة التحديث التلقائي (تأكد من تثبيت streamlit-autorefresh إذا لم تكن موجودة)
+# نقل الاستدعاء إلى أعلى الملف لتفادي مشاكل السيرفر
 from streamlit_autorefresh import st_autorefresh
 
-# تحديث تلقائي كل دقيقتين (120,000 ملي ثانية)
-# تم تسمية الـ key لتفادي أي تعارض مع المدخلات
+# 1. إعدادات الصفحة الأساسية لتظهر بشكل لوحة تحكم عريضة واحترافية
+st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3", layout="wide")
+st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية سيولة آسيا ولندن)")
+st.subheader("تحليل تلقائي متكامل")
+
+# 2. تحديث تلقائي كل دقيقتين (120,000 ملي ثانية) دون التأثير على المدخلات
 count = st_autorefresh(interval=120000, limit=100, key="frameradar_refresh")
 
-# --- الشريط الجانبي لإدخل البيانات والتحكم ---
+# --- الشريط الجانبي لإدخال البيانات والتحكم ---
 st.sidebar.header("إعدادات الفحص والتصفية")
 
-# صندوق إدخال الرموز (تنظيف الفراغات تلقائياً في الكود)
-tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META")
+# 3. إدارة رموز الأسهم وحفظها في الرابط (Query Params) لمنع اختفائها
+if "tickers" in st.query_params:
+    default_tickers = st.query_params["tickers"]
+else:
+    default_tickers = "SPY, QQQ, AAPL, TSLA, AMZN, MSFT, META, BTC-USD"
+
+# صندوق إدخال الرموز (يأخذ القيمة الافتراضية أو المحفوظة في الرابط)
+tickers_input = st.sidebar.text_input("أدخل رموز الأسهم أو المؤشرات (افصل بفاصلة):", default_tickers)
+
+# تحديث الرابط في المتصفح تلقائياً بالرموز الحالية
+st.query_params["tickers"] = tickers_input
+
+# تنظيف الفراغات ومعالجة الرموز كقائمة
 tickers = [t.strip().upper() for t in tickers_input.split(",") if t.strip()]
 
 # إطار الدخول والتنفيذ اللحظي (LTF)
@@ -175,9 +184,9 @@ if results:
     df_results = pd.DataFrame(results)
     try:
         styled_df = df_results.style.apply(style_table_rows, axis=None).set_properties(**{'text-align': 'center'})
-        st.dataframe(styled_df, use_container_width=True)
+        st.dataframe(styled_df, width="stretch") # استخدام التحديث المتوافق مع المعايير الجديدة
     except:
-        st.dataframe(df_results, use_container_width=True)
+        st.dataframe(df_results, width="stretch")
 else:
     st.warning("الرجاء التأكد من كتابة الرموز بشكل صحيح وجاهزية الاتصال بالإنترنت لفحص السوق.")
 
