@@ -3,15 +3,12 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from datetime import datetime, time
-from streamlit_autorefresh import st_autorefresh
+import time as time_sleep # أداة برمجية لإجبار السيرفر على الانتظار
 
 # 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3.2", layout="wide")
+st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3.3", layout="wide")
 st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية السيولة + الفلتر الثلاثي السريع)")
 st.subheader("تحليل سريع ومتكامل مصمم خصيصاً لاقتناص فرص الأوبشن اللحظية")
-
-# 2. تحديث تلقائي كل دقيقتين (120,000 ملي ثانية)
-count = st_autorefresh(interval=120000, limit=100, key="frameradar_refresh")
 
 # --- الشريط الجانبي لإدخال البيانات والتحكم ---
 st.sidebar.header("إعدادات الفحص والتصفية")
@@ -52,7 +49,6 @@ def analyze_stock(ticker):
     try:
         stock = yf.Ticker(ticker)
         
-        # 1. سحب البيانات للفريمات المطلوبة (أسبوعي، يومي، وساعة لبناء الـ 4 ساعات واللحظي)
         df_week = stock.history(period="max", interval="1wk")   
         df_day = stock.history(period="60d", interval="1d")    
         df_ltf = stock.history(period="10d", interval=ltf_period, prepost=True) 
@@ -61,26 +57,20 @@ def analyze_stock(ticker):
         if df_week.empty or df_day.empty or df_ltf.empty or df_raw_1h.empty:
             return None
 
-        # حساب جلسات آسيا ولندن من فريم الساعة
         asia_high, asia_low, london_high, london_low = calculate_session_high_low(df_raw_1h)
 
-        # 2. بناء فريم الـ 4 ساعات وحساب الـ SMA 50 السريع عليه
         df_4h = df_raw_1h.resample('4h').agg({
             'Open': 'first', 'High': 'max', 'Low': 'min', 'Close': 'last', 'Volume': 'sum'
         }).dropna()
         df_4h['SMA50'] = df_4h['Close'].rolling(window=50).mean()
         trend_4h = "صاعد ▲" if df_4h['Close'].iloc[-1] > df_4h['SMA50'].iloc[-1] else "هابط ▼"
 
-        # 3. حساب الفلاتر الجديدة (أسبوعي 10 ويومي 20)
-        # الأسبوعي SMA 10
         df_week['SMA10'] = df_week['Close'].rolling(window=10).mean()
         week_trend = "صاعد ▲" if df_week['Close'].iloc[-1] > df_week['SMA10'].iloc[-1] else "هابط ▼"
         
-        # Daily SMA 20
         df_day['SMA20'] = df_day['Close'].rolling(window=20).mean()
         day_trend = "صاعد ▲" if df_day['Close'].iloc[-1] > df_day['SMA20'].iloc[-1] else "هابط ▼"
 
-        # 4. حساب شرط السيولة المطور (Liquidity Sweep)
         current_low = df_ltf['Low'].iloc[-1]
         current_high = df_ltf['High'].iloc[-1]
         current_close = df_ltf['Close'].iloc[-1]
@@ -111,7 +101,6 @@ def analyze_stock(ticker):
         elif sweep_put:
             sweep_status = "سحب قمم ✓"
 
-        # 5. اتخاذ القرار التلقائي بناءً على الفلترة الثلاثية السريعة لحماية الأوبشن
         if week_trend == "صاعد ▲" and day_trend == "صاعد ▲" and trend_4h == "صاعد ▲" and sweep_call:
             decision = "شراء قوي (CALL) 🔥"
             rr = "1 : 3.0"
@@ -159,7 +148,7 @@ def style_table_rows(df):
                 styles.loc[idx, col] = 'color: #888888;'
     return styles
 
-# --- معالجة البيانات وعرضها المباشر في الواجهة ---
+# --- معالجة البيانات وعرضها ---
 results = []
 for t in tickers:
     res = analyze_stock(t)
@@ -176,4 +165,7 @@ if results:
 else:
     st.warning("الرجاء التأكد من كتابة الرموز بشكل صحيح وجاهزية الاتصال بالإنترنت لفحص السوق.")
 
-st.info("💡 تم تسريع الرادار: الفلترة الآن تعتمد على زخم (الأسبوعي 10، اليومي 20، والـ 4 ساعات 50) لتناسب عقود الأوبشن السريعة.")
+# --- آلية التحديث الإجبارية والمضمونة من داخل السيرفر ---
+st.write(f"⏱️ آخر تحديث آلي تم في: {datetime.now().strftime('%H:%M:%S')}")
+time_sleep.sleep(120) # انتظر 120 ثانية (دقيقتين)
+st.rerun() # أعد تشغيل السيرفر إجبارياً
