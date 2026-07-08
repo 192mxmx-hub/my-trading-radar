@@ -2,11 +2,11 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from datetime import datetime, time
-import time as time_sleep # أداة برمجية لإجبار السيرفر على الانتظار
+from datetime import datetime, timedelta
+import time as time_sleep
 
 # 1. إعدادات الصفحة الأساسية
-st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3.3", layout="wide")
+st.set_page_config(page_title="نظام التداول الأوتوماتيكي المطور v3.4", layout="wide")
 st.title("📊 لوحة الفحص الآلي الذكية (خوارزمية السيولة + الفلتر الثلاثي السريع)")
 st.subheader("تحليل سريع ومتكامل مصمم خصيصاً لاقتناص فرص الأوبشن اللحظية")
 
@@ -49,8 +49,9 @@ def analyze_stock(ticker):
     try:
         stock = yf.Ticker(ticker)
         
+        # تفعيل prepost=True على الفريمات اليومية لضمان قراءة حركة خارج السوق
         df_week = stock.history(period="max", interval="1wk")   
-        df_day = stock.history(period="60d", interval="1d")    
+        df_day = stock.history(period="60d", interval="1d", prepost=True)    
         df_ltf = stock.history(period="10d", interval=ltf_period, prepost=True) 
         df_raw_1h = stock.history(period="60d", interval="1h", prepost=True)
 
@@ -165,7 +166,8 @@ if results:
 else:
     st.warning("الرجاء التأكد من كتابة الرموز بشكل صحيح وجاهزية الاتصال بالإنترنت لفحص السوق.")
 
-# --- آلية التحديث الإجبارية والمضمونة من داخل السيرفر ---
-st.write(f"⏱️ آخر تحديث آلي تم في: {datetime.now().strftime('%H:%M:%S')}")
-time_sleep.sleep(120) # انتظر 120 ثانية (دقيقتين)
-st.rerun() # أعد تشغيل السيرفر إجبارياً
+# --- آلية التحديث المحدثة بتوقيت المملكة الفعلي وثواني الانتظار ---
+saudi_time = datetime.utcnow() + timedelta(hours=3) # تحويل توقيت السيرفر لتوقيت مكة المكرمة مباشر
+st.write(f"⏱️ آخر تحديث آلي تم في (توقيت مكة): {saudi_time.strftime('%H:%M:%S')}")
+time_sleep.sleep(120) 
+st.rerun()
